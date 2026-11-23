@@ -1,7 +1,9 @@
 export type Kind = 'daily' | 'laundry' | 'raid' | 'radar';
 export type When = 'manha' | 'noite';
-export type PhaseId = 'prep' | 'quarto' | 'escritorio' | 'sala' | 'cozinha' | 'banheiro' | 'fechamento';
-export type RoomId = Exclude<PhaseId, 'prep' | 'fechamento'>;
+export type BaseRoomId = 'quarto' | 'escritorio' | 'sala' | 'cozinha' | 'banheiro';
+/** Fases da raid: preparação, cômodos (base ou criados) e fechamento */
+export type PhaseId = string;
+export type RoomId = string;
 
 export interface TaskDef {
   id: string;
@@ -21,6 +23,8 @@ export interface TaskDef {
   every?: number;
   /** Dia da semana da lavanderia: 1 = segunda ... 4 = quinta */
   weekday?: number;
+  /** Rotina só em alguns dias (0 = domingo ... 6 = sábado). Vazio = todos os dias */
+  days?: number[];
   /** Rotina de nível 2: id da rotina "mãe" */
   parent?: string;
   /** Vem desligada por padrão */

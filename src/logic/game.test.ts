@@ -3,8 +3,11 @@ import {
   CONSOLIDATE_AT, XP, activeTasks, comboBonus, computeStreak, houseProgress, isUnlocked, levelInfo,
   phaseProgress, radarInfo, setAlwaysDo, taskMap, toggleRadar, toggleTask,
 } from './game';
-import { dayKey, pk, raidKey, weekKey } from './period';
+import { dayKey, pk, raidDate, raidKey, weekKey } from './period';
 import { initialState, type AppState } from './state';
+
+/** XP sem o das missões (que variam conforme o sorteio do dia) */
+const bx = (s: AppState) => s.xp - Object.values(s.missions).reduce((a, b) => a + b, 0);
 
 const at = (y: number, m: number, d: number, h = 10, min = 0) => new Date(y, m - 1, d, h, min);
 // 2026-11-23 é segunda-feira
@@ -17,10 +20,13 @@ describe('chaves de período', () => {
     expect(weekKey(at(2026, 11, 26))).toBe('2026-11-23');
     expect(weekKey(at(2026, 11, 29))).toBe('2026-11-23'); // domingo pertence à semana anterior
     expect(weekKey(at(2026, 11, 30))).toBe('2026-11-30');
-    expect(raidKey(MON)).toBe('2026-11-27');
-    expect(raidKey(at(2026, 11, 28))).toBe('2026-11-27'); // sábado ainda é a raid de sexta
-    expect(raidKey(at(2027, 1, 1))).toBe('2027-01-01'); // virada de ano
-    expect(pk.raid(FRI)).toBe('r:2026-11-27');
+    expect(raidKey(MON)).toBe('2026-11-23');
+    expect(raidKey(at(2026, 11, 28))).toBe('2026-11-23'); // sábado ainda é a raid da semana
+    expect(raidDate(MON)).toBe('2026-11-27'); // sexta por padrão
+    expect(raidDate(MON, 6)).toBe('2026-11-28'); // sábado
+    expect(raidDate(MON, 0)).toBe('2026-11-29'); // domingo
+    expect(raidDate(at(2027, 1, 1))).toBe('2027-01-01'); // virada de ano
+    expect(pk.raid(FRI)).toBe('r:2026-11-23');
   });
 });
 
@@ -38,20 +44,20 @@ describe('XP', () => {
   it('rotina diária +5 e desmarcar devolve', () => {
     let s = initialState();
     s = toggleTask(s, 'm-cama', MON).state;
-    expect(s.xp).toBe(XP.daily);
+    expect(bx(s)).toBe(XP.daily);
     s = toggleTask(s, 'm-cama', MON).state;
-    expect(s.xp).toBe(0);
+    expect(bx(s)).toBe(0);
     expect(s.counts['m-cama']).toBe(0);
   });
 
   it('rotina consolidada vale +2, lavanderia +15, radar +25', () => {
     let s = initialState();
     s = toggleTask(s, 'm-toalhas', MON).state; // pré-consolidada
-    expect(s.xp).toBe(XP.consolidatedTask);
+    expect(bx(s)).toBe(XP.consolidatedTask);
     s = toggleTask(s, 'lav-seg', MON).state;
-    expect(s.xp).toBe(2 + XP.laundry);
+    expect(bx(s)).toBe(2 + XP.laundry);
     s = toggleRadar(s, 'r-esponja', MON).state;
-    expect(s.xp).toBe(2 + 15 + XP.radar);
+    expect(bx(s)).toBe(2 + 15 + XP.radar);
   });
 
   it('semana de lavanderia completa +30', () => {
@@ -59,9 +65,9 @@ describe('XP', () => {
     for (const [id, d] of [['lav-seg', 23], ['lav-ter', 24], ['lav-qua', 25], ['lav-qui', 26]] as const) {
       s = toggleTask(s, id, at(2026, 11, d)).state;
     }
-    expect(s.xp).toBe(4 * XP.laundry + XP.laundryWeek);
+    expect(bx(s)).toBe(4 * XP.laundry + XP.laundryWeek);
     s = toggleTask(s, 'lav-qui', at(2026, 11, 26)).state;
-    expect(s.xp).toBe(3 * XP.laundry);
+    expect(bx(s)).toBe(3 * XP.laundry);
   });
 });
 
@@ -73,14 +79,14 @@ describe('combo da raid', () => {
     let s = initialState();
     const ids = ['p-cama', 'p-forrar', 'p-produto'];
     ids.forEach((id, i) => (s = toggleTask(s, id, at(2026, 11, 27, 19, i * 2)).state));
-    expect(s.xp).toBe(10 + 12 + 14);
+    expect(bx(s)).toBe(10 + 12 + 14);
     s = toggleTask(s, 'p-kits', at(2026, 11, 27, 19, 30)).state;
-    expect(s.xp).toBe(36 + 10);
+    expect(bx(s)).toBe(36 + 10);
   });
 
   it('cronômetro inicia sozinho na primeira tarefa', () => {
     const s = toggleTask(initialState(), 'p-cama', FRI).state;
-    expect(s.raids['2026-11-27'].runningSince).toBe(FRI.getTime());
+    expect(s.raids['2026-11-23'].runningSince).toBe(FRI.getTime());
   });
 
   it('cômodo 100% dá +30 e pinta o mapa; desmarcar desfaz', () => {
@@ -88,10 +94,10 @@ describe('combo da raid', () => {
     const quarto = phaseProgress(s, 'quarto', FRI).tasks.map((t) => t.id);
     quarto.forEach((id, i) => (s = toggleTask(s, id, at(2026, 11, 27, 19, i * 10)).state));
     expect(phaseProgress(s, 'quarto', FRI).pct).toBe(1);
-    expect(s.xp).toBe(quarto.length * XP.raid + XP.room);
+    expect(bx(s)).toBe(quarto.length * XP.raid + XP.room);
     s = toggleTask(s, quarto[0], at(2026, 11, 27, 22)).state;
     expect(phaseProgress(s, 'quarto', FRI).pct).toBeLessThan(1);
-    expect(s.xp).toBe((quarto.length - 1) * XP.raid);
+    expect(bx(s)).toBe((quarto.length - 1) * XP.raid);
   });
 
   it('raid completa +100 e registra recorde', () => {
@@ -99,7 +105,7 @@ describe('combo da raid', () => {
     const all = activeTasks(s).filter((t) => t.kind === 'raid');
     all.forEach((t, i) => (s = toggleTask(s, t.id, new Date(FRI.getTime() + i * 5 * 60000)).state));
     expect(houseProgress(s, FRI).pct).toBe(1);
-    expect(s.raids['2026-11-27'].completeXp).toBe(XP.raidComplete);
+    expect(s.raids['2026-11-23'].completeXp).toBe(XP.raidComplete);
     expect(s.bestRaidMs).toBe((all.length - 1) * 5 * 60000);
   });
 });
@@ -136,12 +142,12 @@ describe('consolidação e desbloqueio', () => {
     expect(s.consolidated['m-cama']).toBeUndefined();
     const r = toggleTask(s, 'm-cama', at(2026, 11, 20));
     expect(r.events.find((e) => e.type === 'consolidated')).toMatchObject({ unlocked: ['m-cama2'] });
-    expect(r.state.xp - s.xp).toBe(XP.daily + XP.consolidation);
+    expect(bx(r.state) - bx(s)).toBe(XP.daily + XP.consolidation);
     expect(isUnlocked(r.state, taskMap(r.state).get('m-cama2')!)).toBe(true);
     // desmarcar no mesmo dia desfaz
     const u = toggleTask(r.state, 'm-cama', at(2026, 11, 20, 11)).state;
     expect(u.consolidated['m-cama']).toBeUndefined();
-    expect(u.xp).toBe(s.xp);
+    expect(bx(u)).toBe(bx(s));
   });
 
   it('toalhas pré-consolidadas liberam a troca de toalhas', () => {
@@ -159,7 +165,7 @@ describe('consolidação e desbloqueio', () => {
   it('"Já faço sempre" consolida sem XP', () => {
     let s = setAlwaysDo(initialState(), 'n-lixo', true, MON);
     expect(s.consolidated['n-lixo']?.manual).toBe(true);
-    expect(s.xp).toBe(0);
+    expect(bx(s)).toBe(0);
     s = setAlwaysDo(s, 'n-lixo', false, MON);
     expect(s.consolidated['n-lixo']).toBeUndefined();
   });
@@ -182,7 +188,7 @@ describe('radar', () => {
     expect(done.radarDone['r-esponja']).toBe('2026-11-23');
     const undone = toggleRadar(done, 'r-esponja', MON).state;
     expect(undone.radarDone['r-esponja']).toBe('2026-11-01');
-    expect(undone.xp).toBe(s.xp);
+    expect(bx(undone)).toBe(bx(s));
   });
 
   it('tem 26 cantos', () => {

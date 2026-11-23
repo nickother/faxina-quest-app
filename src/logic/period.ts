@@ -29,9 +29,22 @@ export function weekKey(d: Date): string {
   return ymd(addDays(d, diff));
 }
 
-/** Raid: data da sexta-feira da semana (segunda a domingo). */
+/**
+ * Raid: uma por semana. A chave é a segunda-feira da semana, assim mudar o dia
+ * da raid no meio da semana não perde nada.
+ */
 export function raidKey(d: Date): string {
-  return ymd(addDays(parseYmd(weekKey(d)), 4));
+  return weekKey(d);
+}
+
+/** Data (AAAA-MM-DD) do dia da raid nesta semana. raidDay: 0 = domingo ... 6 = sábado */
+export function raidDate(d: Date, raidDay = 5): string {
+  const offset = raidDay === 0 ? 6 : raidDay - 1;
+  return ymd(addDays(parseYmd(weekKey(d)), offset));
+}
+
+export function monthKey(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 }
 
 /** Dias inteiros entre duas datas AAAA-MM-DD (b - a). */

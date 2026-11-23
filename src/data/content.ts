@@ -90,7 +90,7 @@ const DAILY: TaskDef[] = [
   {
     id: 'n-bancada', kind: 'daily', when: 'noite', name: 'Passar pano na bancada e no fogão',
     tip: 'Detergente neutro diluído e pano de microfibra.',
-    master: 'Gordura fresca sai só com água e detergente. Esperou a semana? Ela polimeriza e precisa de desengordurante. Pano todo dia poupa a sexta.',
+    master: 'Gordura fresca sai só com água e detergente. Esperou a semana? Ela polimeriza e precisa de desengordurante. Pano todo dia poupa o dia da faxina.',
   },
   {
     id: 'n-bancada2', kind: 'daily', when: 'noite', parent: 'n-bancada', name: 'Pano de prato trocado e pendurado para secar',
@@ -177,7 +177,7 @@ const RAID: TaskDef[] = [
   },
   {
     id: 'p-forrar', kind: 'raid', phase: 'prep', min: 5, name: 'Forrar a cama com o jogo reserva',
-    tip: 'Ter dois jogos é o que faz a sexta funcionar.',
+    tip: 'Ter dois jogos é o que faz o dia da faxina funcionar.',
     master: 'Forre já agora: a cama arrumada vira referência visual e o quarto fica pronto mais cedo. O jogo que está na máquina vira o reserva da semana que vem.',
   },
   {
@@ -287,7 +287,7 @@ const RAID: TaskDef[] = [
   {
     id: 'c-geladeira', kind: 'raid', phase: 'cozinha', min: 4, name: 'Conferir a geladeira e jogar fora o vencido',
     tip: 'Uma olhada rápida antes das compras do fim de semana.',
-    master: 'Fazer isso na sexta casa com a lista de compras do sábado. Potes antigos para a frente, novos para o fundo.',
+    master: 'Fazer isso no dia da faxina casa com a lista de compras do fim de semana. Potes antigos para a frente, novos para o fundo.',
   },
   {
     id: 'c-lixo', kind: 'raid', phase: 'cozinha', min: 4, name: 'Trocar o saco de lixo e lavar a lixeira se precisar',
@@ -349,7 +349,7 @@ const RAID: TaskDef[] = [
   {
     id: 'f-volta', kind: 'raid', phase: 'fechamento', min: 2, name: 'Dar uma volta pela casa e curtir o resultado',
     tip: 'Vocês merecem!',
-    master: 'Reparar no resultado não é bobagem: é o que faz o cérebro querer repetir na próxima sexta. Banho, jantar e sofá.',
+    master: 'Reparar no resultado não é bobagem: é o que faz o cérebro querer repetir na próxima semana. Banho, jantar e sofá.',
   },
 ];
 
@@ -428,6 +428,52 @@ export const LAUNDRY_GUIDE: { day: string; what: string; note: string }[] = [
   { day: 'Terça', what: 'Roupas brancas', note: 'Só brancas, bolsos vazios.' },
   { day: 'Quarta', what: 'Roupas coloridas', note: 'Do avesso e água fria.' },
   { day: 'Quinta', what: 'Íntimas e fitness', note: 'Saquinho e sem amaciante.' },
-  { day: 'Sexta', what: 'Toda a roupa de cama', note: 'Vai para a máquina no começo da raid; a cama é forrada com o jogo reserva e no fechamento vocês estendem.' },
+  { day: 'Dia da faxina', what: 'Toda a roupa de cama', note: 'Vai para a máquina no começo da raid; a cama é forrada com o jogo reserva e no fechamento vocês estendem.' },
   { day: 'Quando juntar', what: 'Delicadas e panos de limpeza', note: 'Delicadas no ciclo delicado e em saquinho. Panos de limpeza sempre separados da roupa.' },
+];
+
+/* ------------------------------------------------------------------ */
+/* Produtos e compras                                                  */
+/* ------------------------------------------------------------------ */
+export const DEFAULT_PRODUCTS = [
+  'Detergente',
+  'Sabão em pó ou líquido',
+  'Amaciante',
+  'Água sanitária',
+  'Desinfetante',
+  'Multiuso',
+  'Desengordurante',
+  'Limpa-vidros',
+  'Vinagre de álcool',
+  'Bicarbonato de sódio',
+  'Álcool 70%',
+  'Esponjas',
+  'Panos de microfibra',
+  'Luvas de borracha',
+  'Sacos de lixo',
+  'Papel higiênico',
+  'Papel toalha',
+];
+
+/* ------------------------------------------------------------------ */
+/* Cômodos extras (modelos com tarefas sugeridas)                      */
+/* ------------------------------------------------------------------ */
+export const ROOM_TEMPLATES: { name: string; emoji: string; tasks: string[] }[] = [
+  { name: 'Área de serviço', emoji: '🧼', tasks: ['Limpar o tanque e a torneira', 'Organizar os produtos de limpeza', 'Passar pano no chão'] },
+  { name: 'Varanda', emoji: '🪴', tasks: ['Varrer a varanda', 'Limpar o vidro e o guarda-corpo', 'Regar e limpar as plantas'] },
+  { name: 'Lavabo', emoji: '🚽', tasks: ['Pia e espelho', 'Esfregar o vaso', 'Chão do lavabo'] },
+  { name: 'Quarto de hóspedes', emoji: '🛌', tasks: ['Tirar o pó dos móveis', 'Aspirar e passar pano no chão'] },
+  { name: 'Closet', emoji: '👗', tasks: ['Organizar as roupas fora do lugar', 'Tirar o pó das prateleiras'] },
+  { name: 'Corredor', emoji: '🚪', tasks: ['Tirar o pó de quadros e interruptores', 'Aspirar e passar pano no chão'] },
+];
+
+/* ------------------------------------------------------------------ */
+/* Mascote: evolui com o nível                                         */
+/* ------------------------------------------------------------------ */
+export const MASCOT_STAGES: { minLevel: number; name: string; desc: string }[] = [
+  { minLevel: 1, name: 'Filhote', desc: 'Acabou de sair da embalagem.' },
+  { minLevel: 3, name: 'Ajudante', desc: 'Ganhou uma bandana de faxina.' },
+  { minLevel: 5, name: 'Escudeiro', desc: 'Já carrega o próprio rodo.' },
+  { minLevel: 7, name: 'Mago', desc: 'Chapéu de mago e varinha de espuma.' },
+  { minLevel: 9, name: 'Mestre', desc: 'Coroa de Mestre da Casa.' },
 ];
