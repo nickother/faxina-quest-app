@@ -1,61 +1,110 @@
 import { useRef, useState } from 'react';
-import { CHANNELS, LAUNDRY_GUIDE, LESSONS, SAFETY } from '../data/content';
+import { CHANNELS, LAUNDRY_GUIDE, LESSONS, SAFETY, WEEKDAYS } from '../data/content';
 import { Bar, Icon, Switch } from '../components/ui';
 import { ACHIEVEMENTS, CONSOLIDATE_AT, activeTasks, setAlwaysDo } from '../logic/game';
 import { dayKey } from '../logic/period';
 import { normalizeState } from '../logic/state';
 import { useStore } from '../store';
 import { Editor, type EditorSection } from './Editor';
+import { History } from './History';
+import { Products, Rooms, Settings } from './Settings';
+import { ShareButton } from '../components/ShareButton';
 
-export type GuidePage = 'menu' | 'editor' | 'routines' | 'install' | 'laundry' | 'videos' | 'safety' | 'backup' | 'achievements';
+export type GuidePage =
+  | 'menu' | 'history' | 'achievements' | 'editor' | 'rooms' | 'products' | 'routines'
+  | 'settings' | 'install' | 'backup' | 'laundry' | 'videos' | 'safety';
 
-const MENU: { id: GuidePage; icon: string; title: string; desc: string }[] = [
-  { id: 'editor', icon: 'pencil', title: 'Editar tarefas', desc: 'Criar, renomear, ligar e desligar' },
-  { id: 'routines', icon: 'list', title: 'Rotinas', desc: 'Progresso e "Já faço sempre"' },
-  { id: 'install', icon: 'phone', title: 'Instalar no iPhone', desc: 'Adicionar à Tela de Início' },
-  { id: 'laundry', icon: 'shirt', title: 'Lavanderia', desc: 'O que lavar em cada dia' },
-  { id: 'videos', icon: 'video', title: 'Vídeos', desc: 'Canais e aulas no YouTube' },
-  { id: 'safety', icon: 'shield', title: 'Segurança', desc: 'Produtos que não se misturam' },
-  { id: 'backup', icon: 'save', title: 'Backup', desc: 'Exportar e importar seus dados' },
-  { id: 'achievements', icon: 'trophy', title: 'Conquistas', desc: 'Medalhas da casa' },
+interface MenuItem { id: GuidePage; icon: string; title: string; desc: string }
+
+const MENU: { title: string; items: MenuItem[] }[] = [
+  {
+    title: 'Seu progresso',
+    items: [
+      { id: 'history', icon: 'chart', title: 'Histórico e recordes', desc: 'Calendário, gráficos, missões e medalhas' },
+      { id: 'achievements', icon: 'trophy', title: 'Conquistas', desc: 'Medalhas da casa' },
+    ],
+  },
+  {
+    title: 'Sua casa',
+    items: [
+      { id: 'editor', icon: 'pencil', title: 'Editar tarefas', desc: 'Criar, editar, pausar e excluir' },
+      { id: 'rooms', icon: 'home', title: 'Cômodos', desc: 'Renomear, esconder e criar cômodos' },
+      { id: 'products', icon: 'cart', title: 'Produtos e compras', desc: 'O que está acabando' },
+      { id: 'routines', icon: 'list', title: 'Rotinas', desc: 'Progresso e "Já faço sempre"' },
+    ],
+  },
+  {
+    title: 'Configurar',
+    items: [
+      { id: 'settings', icon: 'gear', title: 'Ajustes', desc: 'Mascote, dia da faxina, sons e férias' },
+      { id: 'install', icon: 'phone', title: 'Instalar no iPhone', desc: 'Adicionar à Tela de Início' },
+      { id: 'backup', icon: 'save', title: 'Backup', desc: 'Exportar e importar seus dados' },
+    ],
+  },
+  {
+    title: 'Aprender',
+    items: [
+      { id: 'laundry', icon: 'shirt', title: 'Lavanderia', desc: 'O que lavar em cada dia' },
+      { id: 'videos', icon: 'video', title: 'Vídeos', desc: 'Canais e aulas no YouTube' },
+      { id: 'safety', icon: 'shield', title: 'Segurança', desc: 'Produtos que não se misturam' },
+    ],
+  },
 ];
+
+const ALL_ITEMS = MENU.flatMap((g) => g.items);
 
 export function Guide({ page, editorSection, go, standalone }: { page: GuidePage; editorSection: EditorSection; go: (p: GuidePage) => void; standalone: boolean }) {
   const { state } = useStore();
   if (page === 'menu') {
     const unlocked = Object.keys(state.achievements).length;
+    const toBuy = state.products.filter((p) => p.status !== 'ok').length;
+    const desc = (m: MenuItem) => {
+      if (m.id === 'achievements') return `${unlocked} de ${ACHIEVEMENTS.length} desbloqueadas`;
+      if (m.id === 'products' && toBuy) return `${toBuy} ${toBuy === 1 ? 'item' : 'itens'} para comprar`;
+      return m.desc;
+    };
     return (
       <div className="page">
         <header className="page-head">
           <p className="eyebrow">Manual do herói</p>
           <h1>Guia</h1>
         </header>
-        <ul className="menu card">
-          {MENU.map((m) => (
-            <li key={m.id}>
-              <button className="menu-row" onClick={() => go(m.id)}>
-                <span className={`menu-icon mi-${m.id}`}><Icon name={m.icon} size={20} /></span>
-                <span className="menu-text">
-                  <strong>{m.title}</strong>
-                  <small>{m.id === 'achievements' ? `${unlocked} de ${ACHIEVEMENTS.length} desbloqueadas` : m.desc}</small>
-                </span>
-                <Icon name="chevron" size={18} />
-              </button>
-            </li>
-          ))}
-        </ul>
+        {MENU.map((g) => (
+          <section key={g.title} className="section">
+            <h2 className="menu-group">{g.title}</h2>
+            <ul className="menu card">
+              {g.items.map((m) => (
+                <li key={m.id}>
+                  <button className="menu-row" onClick={() => go(m.id)}>
+                    <span className={`menu-icon mi-${m.id}`}><Icon name={m.icon} size={20} /></span>
+                    <span className="menu-text">
+                      <strong>{m.title}</strong>
+                      <small>{desc(m)}</small>
+                    </span>
+                    {m.id === 'products' && toBuy > 0 && <span className="badge">{toBuy}</span>}
+                    <Icon name="chevron" size={18} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
         <p className="muted sm center">Faxina Quest · seus dados ficam só neste aparelho.</p>
       </div>
     );
   }
-  const meta = MENU.find((m) => m.id === page)!;
+  const meta = ALL_ITEMS.find((m) => m.id === page)!;
   return (
     <div className="page">
       <header className="page-head with-back">
         <button className="back" onClick={() => go('menu')}><Icon name="back" size={20} /> Guia</button>
         <h1>{meta.title}</h1>
       </header>
+      {page === 'history' && <History />}
       {page === 'editor' && <Editor section={editorSection} />}
+      {page === 'rooms' && <Rooms />}
+      {page === 'products' && <Products />}
+      {page === 'settings' && <Settings />}
       {page === 'routines' && <Routines />}
       {page === 'install' && <Install standalone={standalone} />}
       {page === 'laundry' && <Laundry />}
@@ -73,7 +122,7 @@ function Routines() {
   const groups = [
     { title: 'Rotinas diárias', items: all.filter((t) => t.kind === 'daily') },
     { title: 'Lavanderia', items: all.filter((t) => t.kind === 'laundry') },
-    { title: 'Raid de sexta', items: all.filter((t) => t.kind === 'raid') },
+    { title: 'Dia da faxina (raid)', items: all.filter((t) => t.kind === 'raid') },
   ];
   const consolidatedN = all.filter((t) => state.consolidated[t.id]).length;
   return (
@@ -133,14 +182,16 @@ function Install({ standalone }: { standalone: boolean }) {
 }
 
 function Laundry() {
+  const { state } = useStore();
   const today = new Date().getDay();
-  const map: Record<string, number> = { Segunda: 1, Terça: 2, Quarta: 3, Quinta: 4, Sexta: 5 };
+  const raidDay = state.settings.raidDay;
+  const map: Record<string, number> = { Segunda: 1, Terça: 2, Quarta: 3, Quinta: 4, 'Dia da faxina': raidDay };
   return (
     <>
       <ul className="laundry card">
         {LAUNDRY_GUIDE.map((l) => (
           <li key={l.day} className={map[l.day] === today ? 'today' : ''}>
-            <span className="l-day">{l.day}{map[l.day] === today && <em>hoje</em>}</span>
+            <span className="l-day">{l.day === 'Dia da faxina' ? WEEKDAYS[raidDay] : l.day}{map[l.day] === today && <em>hoje</em>}</span>
             <span className="l-what"><strong>{l.what}</strong><small>{l.note}</small></span>
           </li>
         ))}
@@ -256,6 +307,7 @@ function Achievements() {
             <strong>{a.name}</strong>
             <small>{a.desc}</small>
             {got && <small className="ach-date">{got.split('-').reverse().join('/')}</small>}
+            {got && <ShareButton className="ach-share" label="Compartilhar" data={{ kicker: 'Conquista desbloqueada', title: a.name, big: a.icon, subtitle: a.desc }} />}
           </li>
         );
       })}

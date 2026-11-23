@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { PHASES } from '../data/content';
-import type { PhaseId, RoomId } from '../data/types';
+import type { BaseRoomId, PhaseId } from '../data/types';
 import { TaskList } from '../components/TaskRow';
 import { Bar, Icon, Sheet, progressColor } from '../components/ui';
-import { houseProgress, phaseProgress } from '../logic/game';
+import { houseProgress, phaseProgress, phases, type Phase } from '../logic/game';
+import { addTaskToRoom } from '../logic/rooms';
+import type { AppState } from '../logic/state';
 import { useStore } from '../store';
 import type { Nav } from '../App';
 
 interface RoomGeo {
-  id: RoomId;
+  id: BaseRoomId;
   label: string;
   x: number; y: number; w: number; h: number;
   lx: number; ly: number;
@@ -118,8 +119,12 @@ export function MapTab({ nav }: { nav: Nav }) {
   const { state, now } = useStore();
   const [open, setOpen] = useState<PhaseId | null>(null);
   const house = houseProgress(state, now);
-  const openPhase = open ? PHASES.find((p) => p.id === open)! : null;
+  const all = phases(state);
+  const openPhase = open ? all.find((p) => p.id === open) ?? null : null;
   const openProg = open ? phaseProgress(state, open, now) : null;
+  const custom = all.filter((p) => p.custom);
+  const annexRows = Math.ceil(custom.length / 2);
+  const height = 400 + (annexRows ? 14 + annexRows * 104 : 0);
 
   return (
     <div className="page">
@@ -137,49 +142,41 @@ export function MapTab({ nav }: { nav: Nav }) {
             <Bar pct={house.pct} label="Progresso da casa" />
           </div>
         </div>
-        <svg className="plan" viewBox="0 0 340 400" role="group" aria-label="Planta baixa do apartamento">
+        <svg className="plan" viewBox={`0 0 340 ${height}`} role="group" aria-label="Planta baixa do apartamento">
           <defs>
             <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
               <line x1="0" y1="0" x2="0" y2="8" stroke="var(--hatch)" strokeWidth="3" />
             </pattern>
           </defs>
           {ROOMS.map((r) => {
-            const p = phaseProgress(state, r.id, now);
-            const color = progressColor(p.pct);
-            return (
-              <g
-                key={r.id}
-                className="room"
-                data-room={r.id}
-                data-pct={Math.round(p.pct * 100)}
-                role="button"
-                tabIndex={0}
-                aria-label={`${r.label}: ${Math.round(p.pct * 100)}%, faltam ${p.left}`}
-                onClick={() => setOpen(r.id)}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(r.id)}
-              >
-                <rect className="room-floor" x={r.x} y={r.y} width={r.w} height={r.h} />
-                <rect
-                  className="room-fill"
-                  x={r.x} y={r.y} width={r.w} height={r.h}
-                  fill={color}
-                  style={{ transform: `scaleY(${p.pct})` }}
-                />
-                {p.pct === 0 && <rect x={r.x} y={r.y} width={r.w} height={r.h} fill="url(#hatch)" />}
-                <g className="furniture">{r.furniture}</g>
-                <g className="room-label" transform={`translate(${r.lx} ${r.ly})`}>
-                  <rect x="-44" y="-26" width="88" height="52" rx="12" />
-                  <text className="rl-name" y="-9">{r.label}</text>
-                  <text className="rl-pct" y="11" style={{ fill: p.pct === 1 ? 'var(--green-ink)' : undefined }}>{Math.round(p.pct * 100)}%</text>
-                  <text className="rl-left" y="22">{p.left ? `faltam ${p.left}` : 'pronto ✓'}</text>
+            const ph = all.find((p) => p.id === r.id);
+            if (!ph) {
+              return (
+                <g key={r.id} className="room unused" aria-label={`${r.label}: não usado`}>
+                  <rect className="room-floor" x={r.x} y={r.y} width={r.w} height={r.h} />
+                  <g className="furniture">{r.furniture}</g>
+                  <text className="rl-unused" x={r.lx} y={r.ly}>não usado</text>
                 </g>
-              </g>
-            );
+              );
+            }
+            return <RoomShape key={r.id} state={state} now={now} phase={ph} geo={{ x: r.x, y: r.y, w: r.w, h: r.h, lx: r.lx, ly: r.ly }} furniture={r.furniture} onOpen={setOpen} />;
           })}
           <g className="windows">{WINDOWS.map((d) => <path key={d} d={d} />)}</g>
           <g className="walls">{WALLS.map((d) => <path key={d} d={d} />)}</g>
           <g className="doors">{DOORS.map((d) => <path key={d} d={d} />)}</g>
           <text className="entry" x="304" y="133">entrada</text>
+          {custom.map((ph, i) => {
+            const x = 10 + (i % 2) * 165;
+            const y = 414 + Math.floor(i / 2) * 104;
+            const w = 155;
+            const h = 94;
+            return (
+              <g key={ph.id}>
+                <RoomShape state={state} now={now} phase={ph} geo={{ x, y, w, h, lx: x + w / 2, ly: y + h / 2 }} onOpen={setOpen} />
+                <rect className="annex-wall" x={x} y={y} width={w} height={h} />
+              </g>
+            );
+          })}
         </svg>
         <div className="legend">
           <span>0%</span>
@@ -187,11 +184,10 @@ export function MapTab({ nav }: { nav: Nav }) {
           <span>100%</span>
         </div>
         <div className="chips">
-          {(['prep', 'fechamento'] as const).map((id) => {
-            const p = phaseProgress(state, id, now);
-            const ph = PHASES.find((x) => x.id === id)!;
+          {all.filter((p) => !p.room).map((ph) => {
+            const p = phaseProgress(state, ph.id, now);
             return (
-              <button key={id} className="chip" onClick={() => setOpen(id)} data-phase={id} style={{ ['--c' as string]: progressColor(p.pct) }}>
+              <button key={ph.id} className="chip" onClick={() => setOpen(ph.id)} data-phase={ph.id} style={{ ['--c' as string]: progressColor(p.pct) }}>
                 <span className="chip-dot" />
                 {ph.emoji} {ph.name} <strong>{Math.round(p.pct * 100)}%</strong>
               </button>
@@ -200,21 +196,78 @@ export function MapTab({ nav }: { nav: Nav }) {
         </div>
       </section>
 
-      <button className="link-row" onClick={() => nav.tab('raid')}>
-        <Icon name="raid" size={18} /> Abrir a raid com cronômetro e combo
-      </button>
+      <div className="row gap wrap">
+        <button className="link-row grow" onClick={() => nav.tab('raid')}>
+          <Icon name="raid" size={18} /> Abrir a raid
+        </button>
+        <button className="link-row grow" onClick={() => nav.guide('rooms')}>
+          <Icon name="home" size={18} /> Editar cômodos
+        </button>
+      </div>
 
       <Sheet open={!!open} onClose={() => setOpen(null)} title={openPhase ? `${openPhase.emoji} ${openPhase.name}` : ''}>
-        {openProg && (
+        {openProg && openPhase && (
           <>
             <div className="sheet-progress">
               <Bar pct={openProg.pct} />
               <span>{openProg.done}/{openProg.total}</span>
             </div>
-            <TaskList tasks={openProg.tasks} empty="Nenhuma tarefa ligada neste cômodo." />
+            <TaskList tasks={openProg.tasks} empty="Nenhuma tarefa neste cômodo ainda. Adicione a primeira abaixo." />
+            <QuickAdd room={openPhase.id} />
           </>
         )}
       </Sheet>
     </div>
+  );
+}
+
+function RoomShape({ state, now, phase, geo, furniture, onOpen }: {
+  state: AppState; now: Date; phase: Phase; geo: { x: number; y: number; w: number; h: number; lx: number; ly: number }; furniture?: React.ReactNode; onOpen: (id: PhaseId) => void;
+}) {
+  const p = phaseProgress(state, phase.id, now);
+  const pct = Math.round(p.pct * 100);
+  const name = phase.short.length > 16 ? `${phase.short.slice(0, 15)}…` : phase.short;
+  const lw = Math.min(geo.w - 10, Math.max(88, name.length * 6.6 + 18));
+  return (
+    <g
+      className="room"
+      data-room={phase.id}
+      data-pct={pct}
+      role="button"
+      tabIndex={0}
+      aria-label={`${phase.name}: ${pct}%, faltam ${p.left}`}
+      onClick={() => onOpen(phase.id)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(phase.id)}
+    >
+      <rect className="room-floor" x={geo.x} y={geo.y} width={geo.w} height={geo.h} />
+      <rect className="room-fill" x={geo.x} y={geo.y} width={geo.w} height={geo.h} fill={progressColor(p.pct)} style={{ transform: `scaleY(${p.pct})` }} />
+      {p.pct === 0 && <rect x={geo.x} y={geo.y} width={geo.w} height={geo.h} fill="url(#hatch)" />}
+      {furniture && <g className="furniture">{furniture}</g>}
+      <g className="room-label" transform={`translate(${geo.lx} ${geo.ly})`}>
+        <rect x={-lw / 2} y="-26" width={lw} height="52" rx="12" />
+        <text className="rl-name" y="-9">{name}</text>
+        <text className="rl-pct" y="11" style={{ fill: p.pct === 1 ? 'var(--green-ink)' : undefined }}>{pct}%</text>
+        <text className="rl-left" y="22">{p.total === 0 ? 'sem tarefas' : p.left ? `faltam ${p.left}` : 'pronto ✓'}</text>
+      </g>
+    </g>
+  );
+}
+
+function QuickAdd({ room }: { room: PhaseId }) {
+  const { update } = useStore();
+  const [name, setName] = useState('');
+  return (
+    <form
+      className="quick-add"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        update((s) => addTaskToRoom(s, room, name));
+        setName('');
+      }}
+    >
+      <input value={name} maxLength={90} onChange={(e) => setName(e.target.value)} placeholder="Nova tarefa neste cômodo" aria-label="Nova tarefa neste cômodo" />
+      <button className="btn primary sm" type="submit" disabled={!name.trim()}><Icon name="plus" size={18} /> Adicionar</button>
+    </form>
   );
 }

@@ -28,7 +28,7 @@ export function Radar({ nav }: { nav: Nav }) {
       <header className="page-head">
         <p className="eyebrow">Cantos esquecidos</p>
         <h1>Radar</h1>
-        <p className="lead">Limpezas de 15 a 180 dias. Os dois mais atrasados viram missões secretas da sexta.</p>
+        <p className="lead">Limpezas de 15 a 180 dias. Os dois mais atrasados viram missões secretas da faxina da semana.</p>
       </header>
 
       <div className="radar-summary">

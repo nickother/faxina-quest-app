@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { PHASES } from '../data/content';
+import { WEEKDAYS } from '../data/content';
 import { TaskList } from '../components/TaskRow';
 import { Bar, Icon, formatDuration, formatMinutes, progressColor } from '../components/ui';
 import {
   COMBO_WINDOW_MS, comboBonus, currentPhase, estimateMinutes, getRaid, houseProgress, phaseProgress,
-  pinSecretMissions, radarInfo, raidElapsed, resetTimer, secretMissions, taskMap, toggleRadar, toggleTimer,
+  phases, pinSecretMissions, radarInfo, raidElapsed, resetTimer, secretMissions, taskMap, toggleRadar, toggleTimer,
 } from '../logic/game';
-import { dayKey, parseYmd, raidKey } from '../logic/period';
+import { dayKey, parseYmd, raidDate, raidKey } from '../logic/period';
 import { useStore } from '../store';
 import type { Nav } from '../App';
 
@@ -35,14 +35,27 @@ export function Raid({ nav }: { nav: Nav }) {
   const map = taskMap(state);
   const secrets = secretMissions(state, now).map((id) => map.get(id)).filter(Boolean);
   const rk = raidKey(now);
-  const isFriday = now.getDay() === 5;
+  const raidDay = state.settings.raidDay;
+  const rd = parseYmd(raidDate(now, raidDay));
+  const isRaidDay = raidDate(now, raidDay) === dayKey(now);
+  const dayName = WEEKDAYS[raidDay];
   const finished = raid.finishedMs != null;
 
   return (
     <div className="page">
       <header className="page-head">
-        <p className="eyebrow">{isFriday ? 'Hoje é dia!' : `Sexta, ${parseYmd(rk).getDate()}/${parseYmd(rk).getMonth() + 1}`}</p>
-        <h1>Raid de sexta</h1>
+        <p className="eyebrow">{isRaidDay ? 'Hoje é dia!' : `${dayName}, ${rd.getDate()}/${rd.getMonth() + 1}`}</p>
+        <h1>Raid de {dayName.toLowerCase()}</h1>
+        <label className="raid-day">
+          <span>Dia da faxina</span>
+          <select
+            value={raidDay}
+            onChange={(e) => update((s) => ({ ...s, settings: { ...s.settings, raidDay: Number(e.target.value) } }))}
+            aria-label="Dia da faxina da semana"
+          >
+            {[1, 2, 3, 4, 5, 6, 0].map((d) => <option key={d} value={d}>{WEEKDAYS[d]}</option>)}
+          </select>
+        </label>
         <p className="lead">Produto agindo no banheiro primeiro, secos de cima para baixo, molhados por último.</p>
       </header>
 
@@ -88,7 +101,7 @@ export function Raid({ nav }: { nav: Nav }) {
       </section>
 
       <ol className="phases">
-        {PHASES.map((ph, i) => {
+        {phases(state).map((ph, i) => {
           const p = phaseProgress(state, ph.id, now);
           const here = ph.id === current;
           const complete = p.total > 0 && p.left === 0;
@@ -139,7 +152,7 @@ export function Raid({ nav }: { nav: Nav }) {
       </section>
 
       <button className="link-row" onClick={() => nav.editor('raid')}>
-        <Icon name="pencil" size={18} /> Editar tarefas da sexta
+        <Icon name="pencil" size={18} /> Editar tarefas da faxina
       </button>
     </div>
   );

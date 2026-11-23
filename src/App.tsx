@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Overlays } from './components/Overlays';
+import { Onboarding } from './components/Onboarding';
+import { WEEKDAYS } from './data/content';
+import { raidDate, dayKey } from './logic/period';
 import { Icon } from './components/ui';
 import { computeStreak, levelInfo } from './logic/game';
 import { useStore } from './store';
@@ -26,14 +29,17 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'guide', label: 'Guia', icon: 'guide' },
 ];
 
-function readTab(): TabId {
+function readTab(raidDay: number): TabId {
+  const now = new Date();
+  // no dia da faxina, abre direto na raid
+  if (raidDate(now, raidDay) === dayKey(now)) return 'raid';
   try {
     const v = localStorage.getItem('fq-tab') as TabId | null;
     if (v && TABS.some((t) => t.id === v)) return v;
   } catch {
     /* sem storage */
   }
-  return new Date().getDay() === 5 ? 'raid' : 'today';
+  return 'today';
 }
 
 function isStandalone() {
@@ -45,7 +51,7 @@ function isStandalone() {
 
 export default function App() {
   const { state, now } = useStore();
-  const [tab, setTab] = useState<TabId>(readTab);
+  const [tab, setTab] = useState<TabId>(() => readTab(state.settings.raidDay));
   const [guidePage, setGuidePage] = useState<GuidePage>('menu');
   const [editorSection, setEditorSection] = useState<EditorSection>('daily');
   const standalone = useMemo(isStandalone, []);
@@ -97,11 +103,12 @@ export default function App() {
             <span className="xp-num" data-testid="xp">{lvl.into}/{lvl.need} XP</span>
           </div>
         </div>
-        <div className={`streak ${streak > 0 ? 'on' : ''}`} aria-label={`Sequência de ${streak} dias`}>
+        <button className={`streak ${streak > 0 ? 'on' : ''}`} aria-label={`Sequência de ${streak} dias. Abrir histórico`} onClick={() => nav.guide('history')}>
           <Icon name="flame" size={18} />
           <strong>{streak}</strong>
           <small>{streak === 1 ? 'dia' : 'dias'}</small>
-        </div>
+          {state.freezes > 0 && <span className="streak-ice" aria-hidden="true">🧊{state.freezes > 1 ? state.freezes : ''}</span>}
+        </button>
       </header>
 
       <main className="content" key={tab + guidePage}>
@@ -116,12 +123,13 @@ export default function App() {
         {TABS.map((t) => (
           <button key={t.id} className={`tab ${tab === t.id ? 'on' : ''}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => go(t.id)} data-tab={t.id}>
             <span className="tab-icon"><Icon name={t.icon} size={22} /></span>
-            <span className="tab-label">{t.label}</span>
+            <span className="tab-label">{t.id === 'raid' ? WEEKDAYS[state.settings.raidDay] : t.label}</span>
           </button>
         ))}
       </nav>
 
       <Overlays />
+      {!state.settings.onboarded && <Onboarding standalone={standalone} />}
     </div>
   );
 }
