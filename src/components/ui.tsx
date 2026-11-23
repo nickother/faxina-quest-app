@@ -32,6 +32,9 @@ const paths: Record<string, ReactNode> = {
   list: <><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4.5" cy="6" r="1" /><circle cx="4.5" cy="12" r="1" /><circle cx="4.5" cy="18" r="1" /></>,
   phone: <><rect x="7" y="2" width="10" height="20" rx="2.5" /><path d="M11 18h2" /></>,
   external: <><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v6H4V6h6" /></>,
+  chart: <><path d="M4 20h16" /><path d="M7 16v-5M12 16V7M17 16v-8" /></>,
+  cart: <><circle cx="9" cy="20" r="1.5" /><circle cx="17" cy="20" r="1.5" /><path d="M3 4h2.5l2.2 11h10.6l2-8H6.4" /></>,
+  gear: <><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1" /></>,
   sparkle: <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />,
 };
 
@@ -192,4 +195,37 @@ export function formatMinutes(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return h ? `${h}h${m ? String(m).padStart(2, '0') : ''}` : `${m} min`;
+}
+
+const SHORT_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+/** [2, 4] -> "Ter e Qui"; vazio -> "Todo dia" */
+export function daysLabel(days?: number[]) {
+  if (!days?.length || days.length === 7) return 'Todo dia';
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const names = order.filter((d) => days.includes(d)).map((d) => SHORT_DAYS[d]);
+  if (names.length === 5 && !days.includes(0) && !days.includes(6)) return 'Seg a Sex';
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}` : names[0];
+}
+
+/** Seletor de dias da semana (segunda primeiro) */
+export function DayPicker({ value, onChange }: { value: number[]; onChange: (v: number[]) => void }) {
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  return (
+    <div className="day-picker" role="group" aria-label="Dias da semana">
+      {order.map((d) => {
+        const on = value.includes(d);
+        return (
+          <button
+            key={d}
+            type="button"
+            aria-pressed={on}
+            className={on ? 'on' : ''}
+            onClick={() => onChange(on ? value.filter((x) => x !== d) : [...value, d])}
+          >
+            {SHORT_DAYS[d].slice(0, 3)}
+          </button>
+        );
+      })}
+    </div>
+  );
 }

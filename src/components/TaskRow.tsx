@@ -1,6 +1,7 @@
 import { CONSOLIDATE_AT, XP, isConsolidated, isDone, toggleTask, type Task } from '../logic/game';
 import { useStore } from '../store';
-import { Icon } from './ui';
+import { play } from '../lib/sound';
+import { Icon, daysLabel } from './ui';
 
 export function xpFor(t: Task, consolidated: boolean) {
   if (consolidated) return XP.consolidatedTask;
@@ -23,7 +24,10 @@ export function TaskRow({ task, compact = false }: { task: Task; compact?: boole
         role="checkbox"
         aria-checked={done}
         data-task={task.id}
-        onClick={() => act((s, n) => toggleTask(s, task.id, n))}
+        onClick={() => {
+          if (done) play('undo');
+          act((s, n) => toggleTask(s, task.id, n));
+        }}
       >
         <span className="task-check" aria-hidden="true">
           <Icon name="check" size={18} stroke={3} />
@@ -32,6 +36,7 @@ export function TaskRow({ task, compact = false }: { task: Task; compact?: boole
           <span className="task-name">
             {task.name}
             {task.parent && <span className="pill pill-lvl">Nível 2</span>}
+            {task.kind === 'daily' && !!task.days?.length && <span className="pill pill-days">{daysLabel(task.days)}</span>}
             {task.custom && <span className="pill pill-custom">Sua</span>}
           </span>
           {!compact && task.tip && <span className="task-tip">{task.tip}</span>}

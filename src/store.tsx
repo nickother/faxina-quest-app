@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { loadState, requestPersistence, saveState } from './db';
-import { type GameEvent } from './logic/game';
+import { reconcileDays, type GameEvent } from './logic/game';
+import { pinMissions } from './logic/missions';
+import { setSoundEnabled, unlockAudio } from './lib/sound';
 import { dayKey } from './logic/period';
 import { type AppState } from './logic/state';
 
@@ -82,14 +84,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const n = new Date();
       if (dayKey(n) !== dayKey(now)) setNow(n);
       const r = fn(prev, n);
-      persist(r.state);
-      setState(r.state);
+      if (r.state !== prev) {
+        persist(r.state);
+        setState(r.state);
+      }
       if (r.events.length) setEvents((e) => [...e, ...r.events]);
     },
     [persist, now],
   );
 
   const clearEvents = useCallback(() => setEvents([]), []);
+
+  // Ao abrir e a cada novo dia: congelamentos, férias e sequência
+  const ready = !!state;
+  useEffect(() => {
+    if (!ready) return;
+    act((s, n) => {
+      const r = reconcileDays(s, n);
+      return { state: pinMissions(r.state, n), events: r.events };
+    });
+  }, [ready, now, act]);
+
+  useEffect(() => {
+    if (state) setSoundEnabled(state.settings.sound);
+  }, [state]);
+
+  // iOS: o áudio só toca depois do primeiro toque
+  useEffect(() => {
+    const unlock = () => {
+      unlockAudio();
+      window.removeEventListener('pointerdown', unlock);
+    };
+    window.addEventListener('pointerdown', unlock);
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, []);
 
   if (!state) return <div className="boot" aria-busy="true" />;
   return <StoreCtx.Provider value={{ state, now, update, act, events, clearEvents }}>{children}</StoreCtx.Provider>;
