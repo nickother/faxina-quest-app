@@ -22,7 +22,7 @@ Rotina de limpeza da casa, gamificada, em português do Brasil. É um PWA para i
 
 - XP: rotina +5, rotina de nível 2 +8, rotina consolidada +2, lavanderia +15, tarefa da raid +10 (+ combo), canto do radar +25, cômodo 100% +30, raid completa +100, semana de lavanderia +30, consolidação +50, missão diária +10, missão semanal +40, relâmpago no tempo +20.
 - O nível *n* exige `100 + 40·n` XP.
-- A sequência conta o dia quando ≥ 70% das rotinas ativas do dia (não consolidadas) foram feitas.
+- A sequência conta o dia quando mais de 2 tarefas (3 ou mais) são marcadas no dia, de qualquer tipo: rotina (inclusive consolidada), lavanderia, raid ou radar.
 - **Congelamento**: começa com 1, ganha mais 1 a cada 7 dias seguidos (máximo 2). Um dia perdido gasta um congelamento automaticamente. **Modo férias** segura a sequência sem gastar congelamento.
 - Com 15 execuções a rotina **consolida**: confete, dica de "como manter", +50 XP e desbloqueio da rotina de nível 2.
 - Combo: tarefas da raid marcadas com menos de 4 minutos entre si dão +2 XP por nível (máximo +10).

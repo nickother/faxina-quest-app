@@ -111,13 +111,25 @@ describe('combo da raid', () => {
 });
 
 describe('sequência', () => {
-  it('conta o dia com 70% das rotinas ativas não consolidadas', () => {
+  it('conta o dia quando mais de 2 tarefas são marcadas', () => {
     let s = initialState();
-    const counting = activeTasks(s).filter((t) => t.kind === 'daily' && !s.consolidated[t.id]);
-    const need = Math.ceil(counting.length * 0.7);
-    counting.slice(0, need - 1).forEach((t) => (s = toggleTask(s, t.id, MON).state));
+    const daily = activeTasks(s).filter((t) => t.kind === 'daily');
+    daily.slice(0, 2).forEach((t) => (s = toggleTask(s, t.id, MON).state));
     expect(s.dayLog['2026-11-23']).toBe(false);
-    s = toggleTask(s, counting[need - 1].id, MON).state;
+    s = toggleTask(s, daily[2].id, MON).state;
+    expect(s.dayLog['2026-11-23']).toBe(true);
+  });
+
+  it('tarefas de qualquer tipo contam (raid, radar e rotina consolidada)', () => {
+    let s = initialState();
+    const raid = activeTasks(s).find((t) => t.kind === 'raid')!;
+    const radar = activeTasks(s).find((t) => t.kind === 'radar')!;
+    const cons = activeTasks(s).find((t) => t.kind === 'daily' && s.consolidated[t.id]);
+    s = toggleTask(s, raid.id, MON).state;
+    s = toggleRadar(s, radar.id, MON).state;
+    expect(s.dayLog['2026-11-23']).toBe(false);
+    const third = cons ?? activeTasks(s).find((t) => t.kind === 'daily')!;
+    s = toggleTask(s, third.id, MON).state;
     expect(s.dayLog['2026-11-23']).toBe(true);
   });
 

@@ -120,7 +120,7 @@ export function Today({ nav, standalone }: { nav: Nav; standalone: boolean }) {
           {streak.total > 0 && !onVacation && (
             <p className={`hero-sub ${streak.qualifies ? 'ok' : ''}`}>
               <Icon name="flame" size={16} />
-              {streak.qualifies ? 'Sequência de hoje garantida!' : `Faltam ${missing} para o dia contar na sequência`}
+              {streak.qualifies ? 'Sequência de hoje garantida!' : `Marque mais ${missing} ${missing === 1 ? 'tarefa' : 'tarefas'} (qualquer uma) para o dia contar na sequência`}
             </p>
           )}
           <p className="hero-freeze" title="Congelamentos de sequência">
@@ -167,7 +167,7 @@ export function Today({ nav, standalone }: { nav: Nav; standalone: boolean }) {
       </section>
 
       {auto.length > 0 && (
-        <Collapsible title="🤖 Piloto automático" subtitle={`${autoDone} de ${auto.length} hoje · valem 2 XP e não contam para a sequência`}>
+        <Collapsible title="🤖 Piloto automático" subtitle={`${autoDone} de ${auto.length} hoje · valem 2 XP e também contam para a sequência`}>
           <TaskList tasks={auto} compact />
         </Collapsible>
       )}

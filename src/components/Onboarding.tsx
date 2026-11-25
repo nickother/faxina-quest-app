@@ -123,7 +123,7 @@ export function Onboarding({ standalone }: { standalone: boolean }) {
               <li><span>☀️</span><p><strong>Hoje:</strong> rotinas da manhã e da noite, lavanderia e 3 missões por dia.</p></li>
               <li><span>🗺️</span><p><strong>Mapa:</strong> cada tarefa da faxina pinta o cômodo, do coral ao verde.</p></li>
               <li><span>⚡</span><p><strong>Relâmpago:</strong> sem tempo? 15 minutos já adiantam a raid.</p></li>
-              <li><span>🧊</span><p><strong>Sequência:</strong> faça 70% das rotinas do dia. Congelamentos e modo férias protegem vocês.</p></li>
+              <li><span>🧊</span><p><strong>Sequência:</strong> marque mais de 2 tarefas no dia (qualquer uma). Congelamentos e modo férias protegem vocês.</p></li>
               {!standalone && <li><span>📱</span><p><strong>Instale:</strong> Compartilhar → Adicionar à Tela de Início, para o iPhone não apagar seus dados.</p></li>}
             </ul>
           </>

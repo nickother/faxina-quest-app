@@ -173,7 +173,7 @@ export function Overlays() {
                   <p className="modal-lead">Você fez <strong>{t?.name}</strong> 15 vezes. Virou hábito.</p>
                   <div className="modal-box">
                     <strong>Como manter</strong>
-                    <p>{t?.keep ?? 'Continue fazendo no mesmo horário e no mesmo gatilho. Agora ela vale 2 XP e não conta para a sequência, mas segue no Piloto automático para você marcar.'}</p>
+                    <p>{t?.keep ?? 'Continue fazendo no mesmo horário e no mesmo gatilho. Agora ela vale 2 XP e segue no Piloto automático para você marcar.'}</p>
                   </div>
                   {modal.unlocked.length > 0 && (
                     <div className="modal-box unlock">

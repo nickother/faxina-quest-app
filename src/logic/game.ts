@@ -24,7 +24,8 @@ export const XP = {
 } as const;
 
 export const CONSOLIDATE_AT = 15;
-export const STREAK_RATIO = 0.7;
+/** O dia conta na sequência quando mais de 2 tarefas (de qualquer tipo) são marcadas. */
+export const STREAK_MIN_TASKS = 3;
 export const COMBO_WINDOW_MS = 4 * 60 * 1000;
 export const COMBO_STEP = 2;
 export const COMBO_MAX = 10;
@@ -157,12 +158,10 @@ export function isDone(s: AppState, t: TaskDef, now: Date): boolean {
 /* Sequência, congelamento e férias                                    */
 /* ------------------------------------------------------------------ */
 export function dailyStreakStatus(s: AppState, now: Date) {
-  const daily = dailyToday(s, now);
-  const counting = daily.filter((t) => !isConsolidated(s, t.id));
-  const done = counting.filter((t) => isDone(s, t, now)).length;
-  const total = counting.length;
-  const qualifies = total === 0 ? daily.some((t) => isDone(s, t, now)) : done / total >= STREAK_RATIO;
-  return { done, total, qualifies, needed: Math.ceil(total * STREAK_RATIO) };
+  // Qualquer tarefa marcada hoje conta: rotina (inclusive consolidada), lavanderia, raid ou radar.
+  const done = tasksDoneOn(s, dayKey(now));
+  const needed = STREAK_MIN_TASKS;
+  return { done, total: needed, qualifies: done >= needed, needed };
 }
 
 const bridges = (m: DayMark | undefined) => m === 'freeze' || m === 'vacation';
