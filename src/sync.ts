@@ -103,15 +103,16 @@ class SyncEngine {
   }
 
   /* ---------- login ---------- */
-  async sendCode(email: string) {
+  async signIn(email: string, password: string) {
     if (!supabase) return;
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } });
-    if (error) throw new Error(error.message);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) throw new Error(/invalid login/i.test(error.message) ? 'E-mail ou senha incorretos. Se é o primeiro acesso, toque em "Criar conta".' : /not confirmed/i.test(error.message) ? 'Falta desligar "Confirm email" no Supabase (veja o guia).' : error.message);
   }
-  async verifyCode(email: string, token: string) {
+  async signUp(email: string, password: string) {
     if (!supabase) return;
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: token.trim(), type: 'email' });
-    if (error) throw new Error('Código inválido ou expirado. Peça um novo.');
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+    if (error) throw new Error(/already registered/i.test(error.message) ? 'Este e-mail já tem conta. Toque em "Entrar".' : /password/i.test(error.message) ? 'A senha precisa ter pelo menos 6 caracteres.' : error.message);
+    if (!data.session) throw new Error('Conta criada, mas o Supabase pediu confirmação por e-mail. Desligue "Confirm email" em Authentication → Sign In / Providers → Email e toque em "Entrar".');
   }
   async signOut() {
     this.disconnect();

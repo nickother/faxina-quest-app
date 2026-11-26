@@ -8,9 +8,9 @@ import { shareText } from '../lib/share';
 export function SyncCard() {
   const info = useSync();
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [pw, setPw] = useState('');
   const [invite, setInvite] = useState('');
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [mode, setMode] = useState<'in' | 'up'>('up');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -47,26 +47,22 @@ export function SyncCard() {
     <section className="card settings-card stack" id="casa">
       <h3>Casa compartilhada</h3>
 
-      {!info.session && step === 'email' && (
-        <form className="stack" onSubmit={(e) => { e.preventDefault(); run(async () => { await sync.sendCode(email); setStep('code'); }); }}>
-          <p className="muted sm">Entre com seu e-mail para os dois celulares marcarem no mesmo placar. Você recebe um código de acesso, sem senha.</p>
+      {!info.session && (
+        <form className="stack" onSubmit={(e) => { e.preventDefault(); run(() => (mode === 'in' ? sync.signIn(email, pw) : sync.signUp(email, pw))); }}>
+          <p className="muted sm">Entre com e-mail e senha para os dois celulares marcarem no mesmo placar. Cada um usa o seu e-mail.</p>
+          <div className="seg-row" role="tablist">
+            <button type="button" role="tab" aria-selected={mode === 'in'} className={`btn sm ${mode === 'in' ? 'primary' : 'ghost'}`} onClick={() => setMode('in')}>Entrar</button>
+            <button type="button" role="tab" aria-selected={mode === 'up'} className={`btn sm ${mode === 'up' ? 'primary' : 'ghost'}`} onClick={() => setMode('up')}>Criar conta</button>
+          </div>
           <label className="field">
             <span>E-mail</span>
             <input type="email" inputMode="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
           </label>
-          <button className="btn primary block" disabled={busy || !email.includes('@')}>Enviar código</button>
-        </form>
-      )}
-
-      {!info.session && step === 'code' && (
-        <form className="stack" onSubmit={(e) => { e.preventDefault(); run(() => sync.verifyCode(email, code)); }}>
-          <p className="muted sm">Mandamos um código para <strong>{email}</strong>. Confira também o spam.</p>
           <label className="field">
-            <span>Código</span>
-            <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" />
+            <span>Senha <small>mínimo 6 caracteres</small></span>
+            <input type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required value={pw} onChange={(e) => setPw(e.target.value)} />
           </label>
-          <button className="btn primary block" disabled={busy || code.length < 6}>Entrar</button>
-          <button type="button" className="btn ghost block" onClick={() => { setStep('email'); setCode(''); }}>Trocar e-mail</button>
+          <button className="btn primary block" disabled={busy || !email.includes('@') || pw.length < 6}>{mode === 'in' ? 'Entrar' : 'Criar conta'}</button>
         </form>
       )}
 

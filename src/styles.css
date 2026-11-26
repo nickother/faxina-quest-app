@@ -516,7 +516,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .always small { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
 .rename { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
 .rename input { flex: 1 1 100%; }
-input:not([type]), input[type='number'], input[type='email'], select {
+input:not([type]), input[type='number'], input[type='email'], input[type='password'], select {
   width: 100%; min-height: 46px; padding: 10px 12px;
   border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface);
   outline: none; appearance: none; -webkit-appearance: none;
@@ -792,3 +792,5 @@ button.streak { cursor: pointer; min-height: 40px; }
 
 /* Casa compartilhada */
 .invite-code { font-family: 'Fredoka', sans-serif; font-size: 34px; font-weight: 600; letter-spacing: 6px; text-align: center; margin: 4px 0; padding: 10px; border-radius: 14px; background: var(--surface); border: 1.5px dashed var(--line); user-select: all; }
+.seg-row { display: flex; gap: 8px; }
+.seg-row .btn { flex: 1; }

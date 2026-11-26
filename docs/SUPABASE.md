@@ -3,7 +3,7 @@
 Com isso, os dois celulares marcam tarefas no mesmo placar e veem as mudanças um do outro em tempo real.
 Sem o Supabase configurado, o app continua funcionando normalmente, só que cada celular tem seu progresso.
 
-Tempo total: uns 15 minutos. Tudo é feito no computador, em supabase.com, exceto o último passo (no iPhone).
+Tempo total: uns 10 minutos. Tudo é feito no computador, em supabase.com, exceto o último passo (no iPhone).
 
 ---
 
@@ -42,38 +42,18 @@ O que o script cria:
 
 ---
 
-## Passo 3 — Login por código no e-mail
+## Passo 3 — Login com e-mail e senha
 
-No iPhone, o app instalado e o Safari guardam dados separados. Por isso o login usa um **código de 6 dígitos** digitado no próprio app, em vez de um link.
+O app usa e-mail e senha (funciona dentro do app instalado no iPhone e não depende de modelos de e-mail,
+que no plano grátis só podem ser editados com um servidor de e-mail próprio).
 
-### 3.1 Conferir que o login por e-mail está ligado
-1. Menu **Authentication** → **Sign In / Providers** (em alguns painéis, **Providers**).
-2. **Email** deve estar **Enabled** (já vem ligado).
-3. Pode deixar **Confirm email** ligado.
+1. Menu **Authentication** → **Sign In / Providers** → clique em **Email**.
+2. Deixe **Enable Email provider** ligado.
+3. **Desligue "Confirm email"**. Assim a conta já entra na hora, sem precisar clicar em link no e-mail.
+4. Clique em **Save**.
 
-### 3.2 Trocar o link do e-mail por um código
-1. Menu **Authentication** → **Emails** → aba **Templates**.
-2. Abra o modelo **Magic Link**:
-   - **Subject:** `Seu código do Faxina Quest: {{ .Token }}`
-   - **Body** (apague o que tem e cole):
-     ```html
-     <h2>Seu código do Faxina Quest</h2>
-     <p>Digite este código no app:</p>
-     <p style="font-size:28px;font-weight:bold;letter-spacing:4px">{{ .Token }}</p>
-     <p>Ele vale por 1 hora. Se não foi você, ignore este e-mail.</p>
-     ```
-   - Clique em **Save changes**.
-3. Faça o mesmo no modelo **Confirm signup** (é o e-mail do **primeiro** acesso de cada pessoa).
-
-> O que faz o código chegar é a variável `{{ .Token }}`. Se o modelo tiver `{{ .ConfirmationURL }}`, o Supabase manda um link no lugar do código.
-
-### 3.3 Endereço do app (recomendado)
-1. **Authentication** → **URL Configuration**.
-2. **Site URL:** `https://nickother.github.io/faxina-quest-app/`
-3. **Save**.
-
-### Limites do e-mail grátis
-O envio de e-mails embutido do Supabase permite poucos e-mails por hora e é para testes. Para o casal fazer login uma vez em cada celular, é suficiente. O código pode ser pedido de novo depois de 60 segundos. Se um dia precisar de mais, dá para ligar um provedor de e-mail próprio em **Authentication → Emails → SMTP Settings**.
+> Como só vocês dois usam e o acesso aos dados depende de estar na mesma casa (código de convite), não confirmar o e-mail é seguro aqui.
+> Esqueceu a senha? Crie outra conta com outro e-mail e entre na casa de novo pelo código (quem saiu precisa tocar em "Sair da casa" antes, se a casa já tiver 2 pessoas).
 
 ---
 
@@ -109,8 +89,8 @@ Para rodar no computador, o mesmo vale para `.env.local` (copie de `.env.example
 ## Passo 6 — Usar no iPhone
 
 1. Abra o app pelo ícone e puxe para atualizar, ou feche e abra de novo, para pegar a versão nova.
-2. **Guia → Ajustes → Casa compartilhada** → digite seu e-mail → **Enviar código**.
-3. Digite o código do e-mail → **Entrar**.
+2. **Guia → Ajustes → Casa compartilhada** → **Criar conta** → e-mail e senha (mínimo 6 caracteres).
+3. Nas próximas vezes, use **Entrar**.
 4. Quem começa toca em **Criar a nossa casa**. Aparece um código de 6 letras e o botão **Enviar convite**.
 5. No outro celular: faça login com o outro e-mail → digite o código da casa → **Entrar na casa**.
    O progresso que já existia nos dois celulares é juntado.
@@ -123,9 +103,8 @@ Para rodar no computador, o mesmo vale para `.env.local` (copie de `.env.example
 | Sintoma | O que fazer |
 |---|---|
 | "A sincronização ainda não foi configurada" | As variáveis do passo 5 não estavam cadastradas no último deploy. Cadastre e rode o deploy de novo. |
-| Chegou um link em vez de código | Falta `{{ .Token }}` no modelo **Magic Link** ou **Confirm signup** (passo 3.2). |
-| Não chega e-mail | Confira o spam. Espere 60 s para pedir de novo. Pode ter batido o limite por hora: tente mais tarde. |
-| "Código inválido ou expirado" | Use o código do e-mail mais recente; ele vale 1 hora. |
+| "Desligue Confirm email" ao criar conta | Faça o passo 3 e depois toque em **Entrar** com o mesmo e-mail e senha. |
+| "E-mail ou senha incorretos" | Confira a senha. No primeiro acesso, use **Criar conta**. |
 | "Código não encontrado" ao entrar na casa | Confira as 6 letras do convite (sem O, I, L, 0 ou 1). |
 | "Esta casa já tem 2 pessoas" | Limite do app. Quem saiu precisa tocar em **Sair da casa**. |
 | Erro de função ou tabela inexistente | O SQL do passo 2 não rodou até o fim. Rode o arquivo inteiro de novo (ele pode ser executado mais de uma vez). |
