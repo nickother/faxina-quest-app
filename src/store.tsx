@@ -5,6 +5,7 @@ import { pinMissions } from './logic/missions';
 import { setSoundEnabled, unlockAudio } from './lib/sound';
 import { dayKey } from './logic/period';
 import { type AppState } from './logic/state';
+import { sync } from './sync';
 
 interface Ctx {
   state: AppState;
@@ -30,6 +31,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     loadState().then((s) => {
       latest.current = s;
       setState(s);
+      // Casa compartilhada: recebe mudanças do outro celular sem gerar nova gravação
+      sync.init({
+        get: () => latest.current,
+        apply: (remote) => {
+          latest.current = remote;
+          setState(remote);
+          saveState(remote);
+        },
+      });
     });
     requestPersistence();
   }, []);
@@ -57,6 +67,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     latest.current = s;
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => saveState(s), 150);
+    sync.queue();
   }, []);
 
   useEffect(() => {

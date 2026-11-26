@@ -120,3 +120,6 @@ scripts/make-icons.mjs  gera os PNGs dos ícones a partir de public/favicon.svg
 
 - Sincronizar o casal com Supabase (placar único, XP individual e da casa).
 - Lembretes por Web Push (iOS 16.4+) ou um arquivo `.ics` para o Calendário.
+
+## Casa compartilhada (Supabase)
+Para os dois celulares marcarem no mesmo placar, siga [docs/SUPABASE.md](docs/SUPABASE.md). Sem isso, o app funciona normalmente com o progresso salvo em cada aparelho.

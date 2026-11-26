@@ -10,6 +10,7 @@ import { PHASES } from '../data/content';
 import { play } from '../lib/sound';
 import { shareText } from '../lib/share';
 import { useStore } from '../store';
+import { SyncCard } from '../components/SyncCard';
 
 /* ------------------------------------------------------------------ */
 /* Ajustes                                                             */
@@ -24,6 +25,8 @@ export function Settings() {
 
   return (
     <div className="stack-lg">
+      <SyncCard />
+
       <section className="card settings-card">
         <h3>Mascote</h3>
         <div className="mascot-edit">
