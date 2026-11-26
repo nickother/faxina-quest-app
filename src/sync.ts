@@ -11,7 +11,8 @@ import { normalizeState, type AppState } from './logic/state';
  */
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+// Chave publishable (sb_publishable_...). A antiga chave anon ainda é aceita.
+const KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 export const syncConfigured = !!(URL && KEY);
 
 export const supabase: SupabaseClient | null = syncConfigured
