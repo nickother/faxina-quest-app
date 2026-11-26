@@ -94,15 +94,15 @@ O envio de e-mails embutido do Supabase permite poucos e-mails por hora e é par
 
 ## Passo 5 — Ligar o app ao projeto
 
-O app lê duas variáveis do GitHub na hora de publicar:
+O app lê a URL e a chave do arquivo [`.env.production`](../.env.production), que fica no repositório:
 
-| Variável no GitHub | Valor |
-|---|---|
-| `SUPABASE_URL` | a Project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | a publishable key |
+```
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxx
+```
 
-Como cadastrar: no repositório, **Settings → Secrets and variables → Actions → aba Variables → New repository variable**, uma para cada linha da tabela. Depois **Actions → Deploy no GitHub Pages → Run workflow**.
-Para rodar no computador: copie `.env.example` para `.env.local` e preencha.
+Depois de preencher e enviar para a `main`, o GitHub publica o app de novo sozinho (Actions → Deploy no GitHub Pages).
+Para rodar no computador, o mesmo vale para `.env.local` (copie de `.env.example`).
 
 ---
 
